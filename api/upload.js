@@ -85,7 +85,7 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('上传失败:', err);
-    return json({ code: 500, error: '服务器内部错误' }, 500);
+    return json({ code: 500, error: '服务器内部错误', detail: String(err && err.message || err) }, 500);
   }
 }
 
