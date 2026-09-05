@@ -29,38 +29,38 @@ const ALLOWED_TYPES = {
 // 最大文件大小：4MB（Vercel Functions 请求体限制）
 const MAX_SIZE = 4 * 1024 * 1024;
 
-export default async function handler(request) {
+export default async function handler(req, res) {
   // 仅允许 POST
-  if (request.method !== 'POST') {
-    return json({ code: 405, error: 'Method Not Allowed' }, 405);
+  if (req.method !== 'POST') {
+    return res.status(405).json({ code: 405, error: 'Method Not Allowed' });
   }
 
   try {
     // 解析 multipart form data
-    const form = await request.formData();
+    const form = await req.formData();
     const file = form.get('file');
     const customName = form.get('name');
 
     // 校验文件是否存在
     if (!file || typeof file === 'string') {
-      return json({ code: 400, error: '请选择要上传的文件' }, 400);
+      return res.status(400).json({ code: 400, error: '请选择要上传的文件' });
     }
 
     // 校验文件类型
     const extension = ALLOWED_TYPES[file.type];
     if (!extension) {
-      return json(
-        { code: 415, error: '不支持的文件类型，仅支持 Word/Excel/PPT/PDF/TXT/CSV' },
-        415
-      );
+      return res.status(415).json({
+        code: 415,
+        error: '不支持的文件类型，仅支持 Word/Excel/PPT/PDF/TXT/CSV'
+      });
     }
 
     // 校验文件大小
     if (file.size > MAX_SIZE) {
-      return json(
-        { code: 413, error: '文件过大，最大支持 4MB（Vercel 免费版限制）' },
-        413
-      );
+      return res.status(413).json({
+        code: 413,
+        error: '文件过大，最大支持 4MB（Vercel 免费版限制）'
+      });
     }
 
     // 生成唯一文件名（避免冲突）
@@ -76,7 +76,7 @@ export default async function handler(request) {
     });
 
     // 返回文件信息
-    return json({
+    return res.status(200).json({
       code: 0,
       data: {
         url: blob.url,
@@ -88,19 +88,6 @@ export default async function handler(request) {
     });
   } catch (err) {
     console.error('上传失败:', err);
-    return json({ code: 500, error: '服务器内部错误' }, 500);
+    return res.status(500).json({ code: 500, error: '服务器内部错误' });
   }
-}
-
-// 统一 JSON 响应
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
-  });
 }

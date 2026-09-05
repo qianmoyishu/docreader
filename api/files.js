@@ -7,10 +7,10 @@
  */
 import { list } from '@vercel/blob';
 
-export default async function handler(req) {
+export default async function handler(req, res) {
   // 仅允许 GET
   if (req.method !== 'GET') {
-    return json({ code: 405, error: 'Method Not Allowed' }, 405);
+    return res.status(405).json({ code: 405, error: 'Method Not Allowed' });
   }
 
   try {
@@ -27,21 +27,9 @@ export default async function handler(req) {
       uploadedAt: blob.uploadedAt
     }));
 
-    return json({ code: 0, data: files });
+    return res.status(200).json({ code: 0, data: files });
   } catch (err) {
     console.error('获取文件列表失败:', err);
-    return json({ code: 500, error: '服务器内部错误' }, 500);
+    return res.status(500).json({ code: 500, error: '服务器内部错误' });
   }
-}
-
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
-  });
 }

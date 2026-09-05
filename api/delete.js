@@ -7,37 +7,25 @@
  */
 import { del } from '@vercel/blob';
 
-export default async function handler(req) {
+export default async function handler(req, res) {
   // 仅允许 POST
   if (req.method !== 'POST') {
-    return json({ code: 405, error: 'Method Not Allowed' }, 405);
+    return res.status(405).json({ code: 405, error: 'Method Not Allowed' });
   }
 
   try {
-    const body = await req.json();
+    const body = req.body || {};
     const { url } = body;
 
     if (!url) {
-      return json({ code: 400, error: '缺少 url 参数' }, 400);
+      return res.status(400).json({ code: 400, error: '缺少 url 参数' });
     }
 
     await del(url, { token: process.env.BLOB_READ_WRITE_TOKEN });
 
-    return json({ code: 0, data: { url } });
+    return res.status(200).json({ code: 0, data: { url } });
   } catch (err) {
     console.error('删除文件失败:', err);
-    return json({ code: 500, error: '服务器内部错误' }, 500);
+    return res.status(500).json({ code: 500, error: '服务器内部错误' });
   }
-}
-
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
-  });
 }
