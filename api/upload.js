@@ -10,6 +10,8 @@
  *
  * 注意：Vercel Functions 请求体上限约 4.5MB，适合大多数文档。
  *       超过 4MB 的文件建议使用客户端直传模式。
+ *
+ * 使用命名导出 POST（Web fetch 风格），以便使用 request.formData()。
  */
 import { put } from '@vercel/blob';
 
@@ -29,38 +31,33 @@ const ALLOWED_TYPES = {
 // 最大文件大小：4MB（Vercel Functions 请求体限制）
 const MAX_SIZE = 4 * 1024 * 1024;
 
-export default async function handler(req, res) {
-  // 仅允许 POST
-  if (req.method !== 'POST') {
-    return res.status(405).json({ code: 405, error: 'Method Not Allowed' });
-  }
-
+export async function POST(request) {
   try {
     // 解析 multipart form data
-    const form = await req.formData();
+    const form = await request.formData();
     const file = form.get('file');
     const customName = form.get('name');
 
     // 校验文件是否存在
     if (!file || typeof file === 'string') {
-      return res.status(400).json({ code: 400, error: '请选择要上传的文件' });
+      return json({ code: 400, error: '请选择要上传的文件' }, 400);
     }
 
     // 校验文件类型
     const extension = ALLOWED_TYPES[file.type];
     if (!extension) {
-      return res.status(415).json({
+      return json({
         code: 415,
         error: '不支持的文件类型，仅支持 Word/Excel/PPT/PDF/TXT/CSV'
-      });
+      }, 415);
     }
 
     // 校验文件大小
     if (file.size > MAX_SIZE) {
-      return res.status(413).json({
+      return json({
         code: 413,
         error: '文件过大，最大支持 4MB（Vercel 免费版限制）'
-      });
+      }, 413);
     }
 
     // 生成唯一文件名（避免冲突）
@@ -76,7 +73,7 @@ export default async function handler(req, res) {
     });
 
     // 返回文件信息
-    return res.status(200).json({
+    return json({
       code: 0,
       data: {
         url: blob.url,
@@ -88,6 +85,19 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error('上传失败:', err);
-    return res.status(500).json({ code: 500, error: '服务器内部错误' });
+    return json({ code: 500, error: '服务器内部错误' }, 500);
   }
+}
+
+// 统一 JSON 响应
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }
+  });
 }
