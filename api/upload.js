@@ -71,7 +71,8 @@ export default async function handler(request) {
     const blob = await put(pathname, file, {
       access: 'public',
       addRandomSuffix: true,
-      contentType: file.type
+      contentType: file.type,
+      token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
     // 返回文件信息

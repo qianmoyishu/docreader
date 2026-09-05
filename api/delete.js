@@ -21,7 +21,7 @@ export default async function handler(req) {
       return json({ code: 400, error: '缺少 url 参数' }, 400);
     }
 
-    await del(url);
+    await del(url, { token: process.env.BLOB_READ_WRITE_TOKEN });
 
     return json({ code: 0, data: { url } });
   } catch (err) {

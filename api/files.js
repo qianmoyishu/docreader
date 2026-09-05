@@ -15,7 +15,10 @@ export default async function handler(req) {
 
   try {
     // 列出 documents 目录下的所有文件
-    const { blobs } = await list({ prefix: 'documents/' });
+    const { blobs } = await list({
+      prefix: 'documents/',
+      token: process.env.BLOB_READ_WRITE_TOKEN
+    });
 
     const files = blobs.map((blob) => ({
       url: blob.url,
