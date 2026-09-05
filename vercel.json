@@ -2,7 +2,13 @@
   "version": 2,
   "functions": {
     "api/upload.js": {
-      "maxDuration": 10
+      "maxDuration": 60
+    },
+    "api/files.js": {
+      "maxDuration": 60
+    },
+    "api/delete.js": {
+      "maxDuration": 60
     }
   }
 }
