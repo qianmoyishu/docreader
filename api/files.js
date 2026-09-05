@@ -21,7 +21,6 @@ export default async function handler(req, res) {
     });
 
     const files = blobs.map((blob) => ({
-      url: blob.url,
       pathname: blob.pathname,
       size: blob.size,
       uploadedAt: blob.uploadedAt

@@ -15,15 +15,17 @@ export default async function handler(req, res) {
 
   try {
     const body = req.body || {};
-    const { url } = body;
+    // 支持 url 或 pathname 两种方式删除
+    const { url, pathname } = body;
+    const target = pathname || url;
 
-    if (!url) {
-      return res.status(400).json({ code: 400, error: '缺少 url 参数' });
+    if (!target) {
+      return res.status(400).json({ code: 400, error: '缺少 url 或 pathname 参数' });
     }
 
-    await del(url, { token: process.env.BLOB_READ_WRITE_TOKEN });
+    await del(target, { token: process.env.BLOB_READ_WRITE_TOKEN });
 
-    return res.status(200).json({ code: 0, data: { url } });
+    return res.status(200).json({ code: 0, data: { target } });
   } catch (err) {
     console.error('删除文件失败:', err);
     return res.status(500).json({ code: 500, error: '服务器内部错误' });

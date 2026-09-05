@@ -64,7 +64,7 @@ export async function POST(request) {
     const randomId = crypto.randomUUID();
     const pathname = `documents/${randomId}.${extension}`;
 
-    // 上传到 Vercel Blob（store 为私有访问，需用 private）
+    // 上传到 Vercel Blob（store 为 private，文件保持私有，不公开泄露）
     const blob = await put(pathname, file, {
       access: 'private',
       addRandomSuffix: true,
@@ -72,7 +72,7 @@ export async function POST(request) {
       token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
-    // 返回文件信息
+    // 返回文件信息（url 为签名 URL 用于立即预览，pathname 用于后续动态获取签名）
     return json({
       code: 0,
       data: {
