@@ -2,6 +2,7 @@
   "name": "doc-viewer-backend",
   "version": "1.0.0",
   "description": "文档查看小程序后端 - 文件上传与存储（Vercel Blob）",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "dev": "vercel dev",
