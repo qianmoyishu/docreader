@@ -28,6 +28,26 @@ const ALLOWED_TYPES = {
   'text/csv': 'csv'
 };
 
+// 扩展名 -> 正确的 MIME type（部分机型上传时 MIME 为 octet-stream，按文件名推断后补正）
+const EXT_MIME = {
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  pdf: 'application/pdf',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  txt: 'text/plain',
+  csv: 'text/csv'
+};
+
+// 从文件名提取扩展名
+function extFromName(name) {
+  const m = (name || '').match(/\.([a-zA-Z0-9]+)$/);
+  const ext = m ? m[1].toLowerCase() : '';
+  return EXT_MIME[ext] ? ext : '';
+}
+
 // 最大文件大小：4MB（Vercel Functions 请求体限制）
 const MAX_SIZE = 4 * 1024 * 1024;
 
@@ -43,8 +63,12 @@ export async function POST(request) {
       return json({ code: 400, error: '请选择要上传的文件' }, 400);
     }
 
-    // 校验文件类型
-    const extension = ALLOWED_TYPES[file.type];
+    // 校验文件类型：优先按客户端 MIME 判断；
+    // 部分机型 wx.uploadFile 发送 application/octet-stream，此时按文件名兜底推断
+    let extension = ALLOWED_TYPES[file.type];
+    if (!extension) {
+      extension = extFromName(customName || file.name);
+    }
     if (!extension) {
       return json({
         code: 415,
@@ -65,10 +89,11 @@ export async function POST(request) {
     const pathname = `documents/${randomId}.${extension}`;
 
     // 上传到 Vercel Blob（store 为 private，文件保持私有，不公开泄露）
+    // 统一写入正确的 Content-Type，避免 octet-stream 影响预览渲染
     const blob = await put(pathname, file, {
       access: 'private',
       addRandomSuffix: true,
-      contentType: file.type,
+      contentType: EXT_MIME[extension] || file.type,
       token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
